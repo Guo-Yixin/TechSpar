@@ -1,0 +1,23 @@
+name: Contribution full check
+
+on:
+  push:
+    branches: [ci/graph-cache-full-check]
+
+jobs:
+  full-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - name: Verify source matches the PR commit
+        run: git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/contribution-full-check.yml'
+      - run: bun install --frozen-lockfile
+      - run: bun run gen:api && git diff --exit-code -- packages/contracts/openapi.json frontend/src/api/schema.d.ts
+      - run: bun run check
+      - run: bun run test:contracts
